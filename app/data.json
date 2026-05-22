@@ -1,0 +1,32 @@
+{
+  "credentials": [
+    {
+      "id": "testing",
+      "username": "testing",
+      "password": "testing",
+      "plus": false
+    }
+    {
+      "id": "testing_plus",
+      "username": "testing_plus",
+      "password": "testing_plus",
+      "plus": true
+    }
+  ]
+  "notify": [
+    {
+      "heading": "Heading",
+      "1": "Line 1",
+      "2": "Line 2",
+      "3": "Line 3",
+      "4": "Line 4"
+    }
+  ]
+  "version": [
+    {
+      "current": "testing",
+      "old": "testing_old1",
+      "old": "testing_old2"
+    }
+  ]
+}
