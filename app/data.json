@@ -32,5 +32,27 @@
         "testing_old2"
       ]
     }
+  ],
+  "notif_promo": [
+    {
+      "heading": "Upgrade to Plus",
+      "text": "Fireworks+ users get more features, and it helps support my work!",
+      "priority": 2,
+      "time": 10,
+      "repeat": true,
+      "repeat_time": 480,
+      "clickable": false
+    }
+  ],
+  "notif_pass": [
+    {
+      "heading": "Easier login with Fireworks Pass",
+      "text": "Using a pass allows you to login easier, without having to enter your username or password! Click this notification to find out how.",
+      "priority": 1,
+      "time": 10,
+      "repeat": false,
+      "repeat_time": 0,
+      "clickable": true
+    }
   ]
 }
