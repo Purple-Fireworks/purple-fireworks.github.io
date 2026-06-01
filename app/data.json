@@ -36,7 +36,7 @@
   "notif_pass": [
     {
       "heading": "Easier login with Fireworks Pass",
-      "text": "Using a pass allows you to login easier, without having to enter your username or password! Click this notification to find out how.",
+      "text": "Using a pass allows you to login easier, without having to enter your username or password!::n::Click this notification to find out how.",
       "priority": 1,
       "time": 10,
       "repeat": false,
