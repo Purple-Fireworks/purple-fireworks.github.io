@@ -47,7 +47,7 @@
   "notif_notify": [
     {
       "heading": "Testing",
-      "text": "You're using a testing version of Fireworks. Bugs should be expected.",
+      "text": "You're using a testing version of Fireworks.::n::Bugs should be expected.",
       "priority": 2,
       "time": 10,
       "repeat": false,
