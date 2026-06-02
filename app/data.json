@@ -72,7 +72,7 @@
         "Flash Emulator|raw=https://raw.githubusercontent.com/12treesarecool34/flashemulator/refs/heads/main/index.html",
         "Chrome Dino|raw=https://raw.githubusercontent.com/12treesarecool34/dino/refs/heads/main/index.html",
         "Movies & TV|url=https://hexa.su/|plus-only",
-        "AI Chat|url=https://console.upstage.ai/playground/chat|plus-only",
+        "AI Chat|embed=https://console.upstage.ai/playground/chat|plus-only",
         "HTML Editor|raw=https://raw.githubusercontent.com/12treesarecool34/htmleditor/refs/heads/main/index.html|plus-only",
         "AnuraOS|embed=https://anura.pro/|plus-only",
         "Virtual x86|embed=https://copy.sh/v86/|plus-only",
