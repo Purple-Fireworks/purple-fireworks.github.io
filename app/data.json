@@ -96,7 +96,7 @@
   "info": [
     {
       "heading": "About Fireworks",
-      "text": "Fireworks is a web app that organizes and displays a collection of links and embedded content in a customizable interface. It supports themes, tab cloaking, and a simple menu system for easy navigation."
+      "text": "Fireworks is a web app that organizes and displays a collection of embedded content in a customizable interface. It supports themes, tab cloaking, and a simple menu system for easy navigation."
     }
   ]
 }
