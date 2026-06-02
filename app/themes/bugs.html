@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent; }
+        canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <canvas id="bugs-canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('bugs-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, animationId;
+        
+        let fireflies = [];
+        let mouseX = -1000, mouseY = -1000;
+
+        const PI2 = Math.PI * 2;
+        const moonRadius = 30;
+
+        const hill = { 
+            y0: 0.78, 
+            yc: 0.88, 
+            y2: 0.74, 
+            color: '#061c11', 
+            highlight: 'rgba(180, 210, 235, 0.06)' 
+        };
+
+        let h0, hC, h2;
+        let mx, my;
+        let moonGlow, moonGrad;
+
+        function initScene() {
+            fireflies = [];
+            const fireflyCount = Math.floor((width * height) / 24000) + 15;
+            
+            for (let i = 0; i < fireflyCount; i++) {
+                fireflies.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.7,
+                    vy: (Math.random() - 0.5) * 0.7,
+                    size: Math.random() * 1.6 + 1.2,
+                    pulseSpeed: Math.random() * 0.03 + 0.015,
+                    pulsePhase: Math.random() * PI2,
+                    driftSpeed: Math.random() * 0.02 + 0.01,
+                    driftPhase: Math.random() * PI2
+                });
+            }
+        }
+
+        function resize() { 
+            width = canvas.width = window.innerWidth; 
+            height = canvas.height = window.innerHeight; 
+            
+            h0 = hill.y0 * height;
+            hC = hill.yc * height;
+            h2 = hill.y2 * height;
+
+            mx = width * 0.85;
+            my = height * 0.15;
+
+            const glowRadius = Math.max(300, width * 0.35);
+            moonGlow = ctx.createRadialGradient(mx, my, 5, mx, my, glowRadius);
+            moonGlow.addColorStop(0, 'rgba(215, 230, 250, 0.15)');
+            moonGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            moonGrad = ctx.createRadialGradient(mx - 8, my - 8, 2, mx, my, moonRadius);
+            moonGrad.addColorStop(0, '#ffffff');
+            moonGrad.addColorStop(0.75, '#e2ecf7');
+            moonGrad.addColorStop(1, '#b1c6db');
+
+            initScene();
+        }
+        window.addEventListener('resize', resize); 
+        resize();
+
+        function loop() {
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.fillStyle = moonGlow;
+            ctx.beginPath();
+            ctx.arc(mx, my, Math.max(300, width * 0.35), 0, PI2);
+            ctx.fill();
+
+            ctx.fillStyle = moonGrad;
+            ctx.beginPath();
+            ctx.arc(mx, my, moonRadius, 0, PI2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(150, 168, 192, 0.22)';
+            ctx.beginPath(); ctx.arc(mx - 10, my + 10, 10, 0, PI2); ctx.fill();
+            ctx.beginPath(); ctx.arc(mx + 12, my - 6, 8, 0, PI2); ctx.fill();
+            ctx.beginPath(); ctx.arc(mx + 4, my + 14, 6, 0, PI2); ctx.fill();
+            ctx.beginPath(); ctx.arc(mx - 18, my - 4, 4, 0, PI2); ctx.fill();
+
+            ctx.fillStyle = hill.color;
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            ctx.lineTo(0, h0);
+            ctx.quadraticCurveTo(width * 0.5, hC, width, h2);
+            ctx.lineTo(width, height);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = hill.highlight;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, h0);
+            ctx.quadraticCurveTo(width * 0.5, hC, width, h2);
+            ctx.stroke();
+
+            fireflies.forEach(f => {
+                f.driftPhase += f.driftSpeed;
+                f.x += f.vx + Math.sin(f.driftPhase) * 0.15;
+                f.y += f.vy + Math.cos(f.driftPhase) * 0.15;
+
+                const dx = f.x - mouseX;
+                const dy = f.y - mouseY;
+                const distSq = dx * dx + dy * dy;
+                
+                if (distSq < 10000) {
+                    const dist = Math.sqrt(distSq);
+                    if (dist > 0) {
+                        const repelPower = (100 - dist) * 0.004;
+                        f.x += (dx / dist) * repelPower;
+                        f.y += (dy / dist) * repelPower;
+                    }
+                }
+
+                if (f.x < -10) f.x = width + 10;
+                if (f.x > width + 10) f.x = -10;
+                if (f.y < -10) f.y = height + 10;
+                if (f.y > height + 10) f.y = -10;
+
+                f.pulsePhase += f.pulseSpeed;
+                const pulse = Math.max(0, Math.sin(f.pulsePhase) * 0.7 + 0.3);
+
+                if (pulse > 0) {
+                    ctx.globalCompositeOperation = 'screen';
+                    
+                    ctx.fillStyle = `rgba(175, 240, 50, ${pulse * 0.12})`;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, f.size * 6, 0, PI2);
+                    ctx.fill();
+
+                    ctx.fillStyle = `rgba(245, 255, 190, ${pulse * 0.9})`;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, f.size * 0.8, 0, PI2);
+                    ctx.fill();
+
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+            });
+
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function start() { if (!animationId) loop(); }
+        function stop() { cancelAnimationFrame(animationId); animationId = null; }
+
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'stop') stop();
+            if (e.data.type === 'start') start();
+            if (e.data.type === 'mousemove') {
+                mouseX = e.data.x;
+                mouseY = e.data.y;
+            }
+        });
+
+        start();
+    </script>
+</body>
+</html>
