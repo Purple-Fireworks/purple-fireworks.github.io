@@ -92,5 +92,11 @@
     "Night",
     "Bugs",
     "Thunderstorm"
+  ],
+  "info": [
+    {
+      "heading": "About Fireworks",
+      "text": "Fireworks is a web app that organizes and displays a collection of::n::links and embedded content in a customizable interface. It supports themes,::n::tab cloaking, and a simple menu system for easy navigation."
+    }
   ]
 }
