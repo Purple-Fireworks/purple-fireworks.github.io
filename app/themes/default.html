@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent; }
+        canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <canvas id="fireworks-canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [], fireworks = [], animationId, timerTotal = 80, timerTick = 0;
+        const PI2 = Math.PI * 2, NEG_PI_DIV_2 = -Math.PI / 2;
+
+        function resize() { 
+            width = canvas.width = window.innerWidth; 
+            height = canvas.height = window.innerHeight; 
+            ctx.lineCap = 'round'; 
+            ctx.lineWidth = 2; 
+        }
+        window.addEventListener('resize', resize); 
+        resize();
+
+        function random(min, max) { return Math.random() * (max - min) + min; }
+
+        class Firework {
+            constructor() {
+                this.x = random(width * 0.1, width * 0.9); this.y = height;
+                this.coordinates = [[this.x, this.y], [this.x, this.y], [this.x, this.y]];
+                const targetY = random(height * 0.1, height * 0.4);
+                const speed = Math.sqrt(2 * 0.05 * (height - targetY));
+                const angle = NEG_PI_DIV_2 + random(-0.35, 0.35);
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.hue = random(0, 360);
+            }
+            update() {
+                this.coordinates.pop(); this.coordinates.unshift([this.x, this.y]);
+                this.vy += 0.05; this.x += this.vx; this.y += this.vy;
+                if (this.vy >= -0.5) { this.explode(); return false; } return true;
+            }
+            draw() {
+                ctx.beginPath(); ctx.moveTo(this.coordinates[2][0], this.coordinates[2][1]);
+                ctx.lineTo(this.x, this.y); ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`; ctx.stroke();
+            }
+            explode() { for (let i = 0; i < 50; i++) particles.push(new Particle(this.x, this.y, this.hue)); }
+        }
+
+        class Particle {
+            constructor(x, y, hue) {
+                this.x = x; this.y = y; this.coordinates = [[x, y], [x, y], [x, y], [x, y], [x, y]];
+                const angle = random(0, PI2), speed = random(1, 8);
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.hue = hue + random(-20, 20); this.alpha = 1; this.decay = random(0.015, 0.03);
+            }
+            update() {
+                this.coordinates.pop(); this.coordinates.unshift([this.x, this.y]);
+                this.vx *= 0.95; this.vy *= 0.95; this.vy += 0.08;
+                this.x += this.vx; this.y += this.vy; this.alpha -= this.decay;
+                return this.alpha > this.decay;
+            }
+            draw() {
+                ctx.beginPath(); ctx.moveTo(this.coordinates[4][0], this.coordinates[4][1]);
+                ctx.lineTo(this.x, this.y); ctx.strokeStyle = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`; ctx.stroke();
+            }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, width, height);
+            if (++timerTick >= timerTotal) { fireworks.push(new Firework()); timerTick = 0; timerTotal = random(20, 70); }
+            fireworks = fireworks.filter(f => { f.draw(); return f.update(); });
+            particles = particles.filter(p => { p.draw(); return p.update(); });
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function start() { if (!animationId) loop(); }
+        function stop() { cancelAnimationFrame(animationId); animationId = null; }
+
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'stop') stop();
+            if (e.data.type === 'start') start();
+        });
+
+        start();
+    </script>
+</body>
+</html>

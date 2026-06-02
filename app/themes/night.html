@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent; }
+        canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <canvas id="fireworks-canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, stars = [], comets = [], animationId;
+        const bgCanvas = document.createElement('canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const PI2 = Math.PI * 2;
+
+        function drawStaticMilkyWay() {
+            bgCanvas.width = width;
+            bgCanvas.height = height;
+            bgCtx.clearRect(0, 0, width, height);
+            bgCtx.save();
+            bgCtx.globalCompositeOperation = 'source-over';
+            
+            if (typeof bgCtx.filter !== 'undefined') {
+                bgCtx.filter = 'blur(50px)';
+            }
+            
+            bgCtx.beginPath();
+            bgCtx.moveTo(-50, height * 0.55);
+            bgCtx.quadraticCurveTo(width * 0.4, height * 0.3, width + 50, height * 0.18);
+            bgCtx.strokeStyle = 'rgba(138, 43, 226, 0.08)'; 
+            bgCtx.lineWidth = Math.max(250, width * 0.3);
+            bgCtx.stroke();
+
+            bgCtx.beginPath();
+            bgCtx.moveTo(-50, height * 0.55);
+            bgCtx.quadraticCurveTo(width * 0.4, height * 0.3, width + 50, height * 0.18);
+            bgCtx.strokeStyle = 'rgba(70, 130, 180, 0.06)'; 
+            bgCtx.lineWidth = Math.max(160, width * 0.2);
+            bgCtx.stroke();
+
+            bgCtx.beginPath();
+            bgCtx.moveTo(-50, height * 0.55);
+            bgCtx.quadraticCurveTo(width * 0.4, height * 0.3, width + 50, height * 0.18);
+            bgCtx.strokeStyle = 'rgba(255, 215, 120, 0.04)'; 
+            bgCtx.lineWidth = Math.max(80, width * 0.12);
+            bgCtx.stroke();
+
+            bgCtx.beginPath();
+            bgCtx.moveTo(-50, height * 0.55);
+            bgCtx.quadraticCurveTo(width * 0.4, height * 0.3, width + 50, height * 0.18);
+            bgCtx.strokeStyle = 'rgba(245, 245, 255, 0.15)'; 
+            bgCtx.lineWidth = Math.max(30, width * 0.04);
+            bgCtx.stroke();
+
+            bgCtx.restore();
+        }
+
+        function initStars() {
+            stars = [];
+            const mwStarCount = Math.floor((width * height) / 6000);
+            const p0x = 0, p0y = height * 0.55;
+            const p1x = width * 0.4, p1y = height * 0.3;
+            const p2x = width, p2y = height * 0.18;
+
+            for (let i = 0; i < mwStarCount; i++) {
+                const t = Math.random();
+                const cx = (1-t)*(1-t)*p0x + 2*(1-t)*t*p1x + t*t*p2x;
+                const cy = (1-t)*(1-t)*p0y + 2*(1-t)*t*p1y + t*t*p2y;
+                const angle = Math.random() * PI2;
+                const dist = Math.abs((Math.random() * 2 - 1) * (Math.random() * 2 - 1)) * Math.max(100, width * 0.12);
+
+                stars.push({
+                    x: cx + Math.cos(angle) * dist,
+                    y: cy + Math.sin(angle) * dist,
+                    size: Math.random() * 0.9 + 0.1, 
+                    alpha: Math.random() * 0.6 + 0.1,
+                    speed: Math.random() * 0.03 + 0.01, 
+                    phase: Math.random() * PI2
+                });
+            }
+
+            const bgStarCount = Math.floor((width * height) / 18000);
+            for (let i = 0; i < bgStarCount; i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 1.4 + 0.4,
+                    alpha: Math.random() * 0.8 + 0.2,
+                    speed: Math.random() * 0.05 + 0.02, 
+                    phase: Math.random() * PI2
+                });
+            }
+        }
+
+        function spawnComet() {
+            const startX = Math.random() * width;
+            const startY = Math.random() * (height * 0.35);
+            const angle = Math.PI / 6 + Math.random() * (Math.PI / 6); 
+            const speed = Math.random() * 6 + 6;
+            const dirX = Math.random() > 0.5 ? 1 : -1;
+            comets.push({
+                x: startX,
+                y: startY,
+                vx: Math.cos(angle) * speed * dirX,
+                vy: Math.sin(angle) * speed,
+                length: Math.random() * 80 + 40,
+                alpha: 1.0,
+                decay: Math.random() * 0.015 + 0.008
+            });
+        }
+
+        function resize() { 
+            width = canvas.width = window.innerWidth; 
+            height = canvas.height = window.innerHeight; 
+            initStars();
+            drawStaticMilkyWay();
+        }
+        window.addEventListener('resize', resize); 
+        resize();
+
+        function loop() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(bgCanvas, 0, 0);
+
+            stars.forEach(s => {
+                s.phase += s.speed;
+                const currentAlpha = ((Math.sin(s.phase) + 1) / 2) * 0.85 + 0.15;
+                ctx.fillStyle = `rgba(255, 255, 255, ${currentAlpha})`;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+
+            comets = comets.filter(c => {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${c.alpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.moveTo(c.x, c.y);
+                ctx.lineTo(c.x - c.vx * (c.length / 100), c.y - c.vy * (c.length / 100));
+                ctx.stroke();
+
+                c.x += c.vx;
+                c.y += c.vy;
+                c.alpha -= c.decay;
+
+                return c.alpha > 0 && c.x >= -100 && c.x <= width + 100 && c.y >= -100 && c.y <= height + 100;
+            });
+
+            if (Math.random() < 0.003) {
+                spawnComet();
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function start() { if (!animationId) loop(); }
+        function stop() { cancelAnimationFrame(animationId); animationId = null; }
+
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'stop') stop();
+            if (e.data.type === 'start') start();
+        });
+
+        start();
+    </script>
+</body>
+</html>
