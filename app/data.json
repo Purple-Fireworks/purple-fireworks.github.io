@@ -81,11 +81,11 @@
     }
   ],
   "tab_cloak": [
-    "Google Drive|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://drive.google.com/&size=[SIZE]",
-    "Google Search|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://www.google.com/&size=[SIZE]",
-    "Google Classroom|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://classroom.google.com/&size=[SIZE]",
-    "Google Docs|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://docs.google.com/&size=[SIZE]",
-    "Canva|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://www.canva.com/&size=[SIZE]",
-    "Infinite Campus|favicon=https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=https://www.infinitecampus.com/&size=[SIZE]"
+    "Google Drive",
+    "Google Classroom",
+    "Google Docs",
+    "Google",
+    "Canva",
+    "Infinite Campus"
   ]
 }
