@@ -3,29 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent; }
-        canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            width: 100%; 
+            height: 100%; 
+            background: transparent; 
+        }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none; 
+            contain: strict; 
+        }
     </style>
 </head>
 <body>
     <canvas id="thunder-canvas"></canvas>
     <script>
         const canvas = document.getElementById('thunder-canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+        
         let width, height, animationId;
         
-        let rainBuckets = [[], [], []];
+        const STRIDE = 6;
+        let rainBuckets = [new Float32Array(0), new Float32Array(0), new Float32Array(0)];
         const opacities = [0.14, 0.20, 0.26];
         let cloudsCanvas;
         
         let flashAlpha = 0;
         let strikeTimer = 60;
-        let strikeSequence = [];
-        let activeFlashes = [];
+        const strikeSequence = [];
+        const activeFlashes = [];
 
         let wrapX, wrapY, resetXMin, resetXRange;
-
-        const PI2 = Math.PI * 2;
 
         function initScene() {
             wrapX = width + 100;
@@ -33,30 +46,32 @@
             resetXMin = -200;
             resetXRange = width + 300;
 
-            rainBuckets = [[], [], []];
             const rainCount = Math.floor((width * height) / 9000) + 120;
-            for (let i = 0; i < rainCount; i++) {
-                const vy = Math.random() * 6 + 14;
-                const vx = Math.random() * 2 + 3;
-                const len = Math.random() * 12 + 15;
-                const bucketIndex = Math.floor(Math.random() * 3);
-                
-                rainBuckets[bucketIndex].push({
-                    x: Math.random() * resetXRange - 150,
-                    y: Math.random() * height - height,
-                    vy: vy,
-                    vx: vx,
-                    len: len,
-                    dx: vx * (len / vy)
-                });
+            const countPerBucket = Math.floor(rainCount / 3);
+
+            for (let b = 0; b < 3; b++) {
+                rainBuckets[b] = new Float32Array(countPerBucket * STRIDE);
+                const bucket = rainBuckets[b];
+
+                for (let i = 0; i < countPerBucket; i++) {
+                    const idx = i * STRIDE;
+                    const vy = Math.random() * 6 + 14;
+                    const vx = Math.random() * 2 + 3;
+                    const len = Math.random() * 12 + 15;
+
+                    bucket[idx]     = Math.random() * resetXRange - 150;
+                    bucket[idx + 1] = Math.random() * height - height;
+                    bucket[idx + 2] = vx;
+                    bucket[idx + 3] = vy;
+                    bucket[idx + 4] = len;
+                    bucket[idx + 5] = vx * (len / vy);
+                }
             }
 
             cloudsCanvas = document.createElement('canvas');
             cloudsCanvas.width = width;
-            
             const cloudMaxHeight = 160;
-            const pad = 90;
-            cloudsCanvas.height = cloudMaxHeight + pad;
+            cloudsCanvas.height = cloudMaxHeight + 90;
             const cctx = cloudsCanvas.getContext('2d');
             
             if (typeof cctx.filter !== 'undefined') {
@@ -77,32 +92,29 @@
             cctx.closePath();
             cctx.fill();
 
-            strikeSequence = [];
-            activeFlashes = [];
+            strikeSequence.length = 0;
+            activeFlashes.length = 0;
             strikeTimer = Math.floor(Math.random() * 80) + 40;
         }
 
         function triggerLightningStrike(intensity = 1.0) {
             flashAlpha = intensity;
-            activeFlashes = [];
+            activeFlashes.length = 0;
             
             const flashCount = Math.random() < 0.4 ? 2 : 1;
             
             for (let i = 0; i < flashCount; i++) {
                 const r = Math.random() * (width * 0.3) + (width * 0.4);
                 const maxAlpha = Math.random() * 0.25 + 0.7;
-                const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, r);
-                
+                const x = Math.random() * width;
+                const y = Math.random() * 120 - 40;
+
+                const grad = ctx.createRadialGradient(x, y, 5, x, y, r);
                 grad.addColorStop(0, `rgba(255, 255, 255, ${maxAlpha})`);
                 grad.addColorStop(0.12, `rgba(180, 220, 255, ${maxAlpha * 0.8})`);
                 grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-                activeFlashes.push({
-                    x: Math.random() * width,
-                    y: Math.random() * 120 - 40,
-                    r: r,
-                    grad: grad
-                });
+                activeFlashes.push({ x, y, r, grad });
             }
         }
 
@@ -111,7 +123,12 @@
             height = canvas.height = window.innerHeight; 
             initScene();
         }
-        window.addEventListener('resize', resize); 
+        
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resize, 100);
+        }); 
         resize();
 
         function loop() {
@@ -126,35 +143,31 @@
                 ctx.save();
                 ctx.globalCompositeOperation = 'screen';
                 ctx.globalAlpha = flashAlpha;
-                activeFlashes.forEach(f => {
-                    ctx.translate(f.x, f.y);
+                for (let i = 0; i < activeFlashes.length; i++) {
+                    const f = activeFlashes[i];
                     ctx.fillStyle = f.grad;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, f.r, 0, PI2);
-                    ctx.fill();
-                    ctx.translate(-f.x, -f.y);
-                });
+                    ctx.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+                }
                 ctx.restore();
-            }
 
-            if (flashAlpha > 0) {
                 flashAlpha *= 0.90; 
                 if (flashAlpha < 0.02) {
                     flashAlpha = 0;
-                    activeFlashes = [];
+                    activeFlashes.length = 0;
                 }
             }
 
             ctx.drawImage(cloudsCanvas, 0, -45);
 
             if (strikeSequence.length > 0) {
-                strikeSequence.forEach(s => {
+                for (let i = strikeSequence.length - 1; i >= 0; i--) {
+                    const s = strikeSequence[i];
                     s.delay--;
-                    if (s.delay === 0) {
+                    if (s.delay <= 0) {
                         triggerLightningStrike(s.intensity);
+                        strikeSequence.splice(i, 1);
                     }
-                });
-                strikeSequence = strikeSequence.filter(s => s.delay > 0);
+                }
             } else {
                 strikeTimer--;
                 if (strikeTimer <= 0) {
@@ -171,20 +184,31 @@
             for (let b = 0; b < 3; b++) {
                 ctx.strokeStyle = `rgba(165, 195, 225, ${opacities[b]})`;
                 ctx.beginPath();
+                
                 const bucket = rainBuckets[b];
                 const len = bucket.length;
-                for (let i = 0; i < len; i++) {
-                    const r = bucket[i];
-                    ctx.moveTo(r.x, r.y);
-                    ctx.lineTo(r.x + r.dx, r.y + r.len);
 
-                    r.x += r.vx;
-                    r.y += r.vy;
+                for (let i = 0; i < len; i += STRIDE) {
+                    let rx = bucket[i];
+                    let ry = bucket[i + 1];
+                    const rvx = bucket[i + 2];
+                    const rvy = bucket[i + 3];
+                    const rlen = bucket[i + 4];
+                    const rdx = bucket[i + 5];
 
-                    if (r.y > wrapY || r.x > wrapX) {
-                        r.y = Math.random() * -50;
-                        r.x = Math.random() * resetXRange + resetXMin;
+                    ctx.moveTo(rx, ry);
+                    ctx.lineTo(rx + rdx, ry + rlen);
+
+                    rx += rvx;
+                    ry += rvy;
+
+                    if (ry > wrapY || rx > wrapX) {
+                        ry = Math.random() * -50;
+                        rx = Math.random() * resetXRange + resetXMin;
                     }
+
+                    bucket[i] = rx;
+                    bucket[i + 1] = ry;
                 }
                 ctx.stroke();
             }
